@@ -1,5 +1,14 @@
 # Agentic Research & Action Assistant
 
+## 🌐 Live Demo
+
+Try the deployed Streamlit app here:
+
+https://agentic-research-assistant-hw-ksc3gvcnkvxflrtvbufzgu.streamlit.app/
+
+You can run tasks, explore evaluation results, and view the observability dashboard directly in the browser — no setup required.
+
+
 A **multi-agent system** that answers business questions using project documents and produces **client-ready, structured deliverables**. Built with **LangGraph**, it orchestrates a **Planner → Researcher → Writer → Verifier** pipeline with vector retrieval (FAISS), citation-grounded outputs, and a verification layer that refuses to hallucinate when evidence is missing.
 
 ---
