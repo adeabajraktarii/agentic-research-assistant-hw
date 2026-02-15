@@ -35,39 +35,62 @@ def save_index(vectorstore: FAISS, chunk_docs: List[Document]) -> None:
     with META_PATH.open("w", encoding="utf-8") as f:
         for d in chunk_docs:
             f.write(
-                json.dumps({"page_content": d.page_content, "metadata": d.metadata}, ensure_ascii=False)
+                json.dumps(
+                    {"page_content": d.page_content, "metadata": d.metadata},
+                    ensure_ascii=False,
+                )
                 + "\n"
             )
 
 
 def load_index() -> Tuple[FAISS, List[Document]]:
+    """
+    Load FAISS index in a Streamlit/Linux-safe way.
+    If pickle fails (Windows vs Linux issue), rebuild index from docs.
+    """
     embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
-    # NOTE: FAISS.load_local uses pickle under the hood for docstore/index metadata.
-    # Keep data/index/ gitignored to avoid loading untrusted artifacts.
-    vectorstore = FAISS.load_local(
-        str(FAISS_PATH),
-        embeddings,
-        allow_dangerous_deserialization=True,
-    )
+    try:
+        vectorstore = FAISS.load_local(
+            str(FAISS_PATH),
+            embeddings,
+            allow_dangerous_deserialization=True,
+        )
+    except Exception:
+        # If loading fails (very common on Streamlit due to Windows pickle),
+        # rebuild the index from documents.
+        vectorstore, chunks = build_faiss_index()
+        save_index(vectorstore, chunks)
+        return vectorstore, chunks
 
     chunk_docs: List[Document] = []
     if META_PATH.exists():
         with META_PATH.open("r", encoding="utf-8") as f:
             for line in f:
                 row = json.loads(line)
-                chunk_docs.append(Document(page_content=row["page_content"], metadata=row["metadata"]))
+                chunk_docs.append(
+                    Document(page_content=row["page_content"], metadata=row["metadata"])
+                )
 
     return vectorstore, chunk_docs
 
 
-def ensure_index(docs_dir: str = "data/docs", force_rebuild: bool = False) -> Tuple[FAISS, List[Document]]:
-    faiss_files_ok = (FAISS_PATH / "index.faiss").exists() and (FAISS_PATH / "index.pkl").exists()
+def ensure_index(
+    docs_dir: str = "data/docs", force_rebuild: bool = False
+) -> Tuple[FAISS, List[Document]]:
+    """
+    Ensure index exists.
+    IMPORTANT: We no longer require index.pkl (Windows pickle issue).
+    If anything is missing or broken, we rebuild automatically.
+    """
+
+    faiss_exists = (FAISS_PATH / "index.faiss").exists()
     meta_ok = META_PATH.exists()
 
-    if not force_rebuild and faiss_files_ok and meta_ok:
+    if not force_rebuild and faiss_exists and meta_ok:
         return load_index()
 
     vectorstore, chunks = build_faiss_index(docs_dir=docs_dir)
     save_index(vectorstore, chunks)
     return vectorstore, chunks
+
