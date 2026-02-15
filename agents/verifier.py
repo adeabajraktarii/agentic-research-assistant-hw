@@ -20,7 +20,7 @@ def _draft_has_citation_markers(text: str) -> bool:
     """
     if not text:
         return False
-    # Common markers used across your project outputs
+    
     markers = ["doc:", "#chunk_", "(doc:", "chunk "]
     return any(m in text for m in markers)
 
@@ -33,12 +33,10 @@ def verifier_agent(state: SharedState) -> SharedState:
     has_evidence = _has_any_citations(notes)
     draft_grounded = _draft_has_citation_markers(draft)
 
-    # Rule 1: If retrieval has no citations, we must refuse.
+    
     if not has_evidence:
         problems.append("No citations found in research_notes. Output must be 'Not found in sources'.")
 
-    # Rule 2: Even if retrieval returned something, the answer itself must contain grounding markers.
-    # This blocks generic, ungrounded responses for out-of-scope questions (e.g., pizza).
     if has_evidence and not draft_grounded:
         problems.append(
             "Draft contains no citation markers (e.g., doc:...#chunk_...). "
@@ -48,7 +46,7 @@ def verifier_agent(state: SharedState) -> SharedState:
     state.verification_notes = problems
 
     if problems:
-        # IMPORTANT: wipe draft so the UI can't accidentally show it
+        
         state.draft = ""
 
         state.final_output = (

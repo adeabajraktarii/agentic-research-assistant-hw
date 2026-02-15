@@ -4,7 +4,7 @@ from shared_state import SharedState
 
 
 def planner_agent(state: SharedState) -> SharedState:
-    # Minimal plan template (we’ll improve later)
+    
     state.plan = [
         "Clarify the user goal + required outputs (deliverable package).",
         "Retrieve relevant evidence from provided documents.",

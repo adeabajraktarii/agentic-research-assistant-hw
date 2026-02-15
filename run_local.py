@@ -16,22 +16,20 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    # Always ensure index exists
     if args.rebuild_index:
         print("Rebuilding FAISS index from data/docs ...")
         ensure_index(docs_dir="data/docs", force_rebuild=True)
-        print("✅ Index rebuilt.")
+        print(" Index rebuilt.")
         return
     else:
         ensure_index(docs_dir="data/docs", force_rebuild=False)
 
-    # If no task provided → just ensure index
     if not args.task_key:
-        print("✅ Index ready. Provide --task_key to run a task.")
+        print(" Index ready. Provide --task_key to run a task.")
         return
 
     if args.task_key not in EXAMPLE_TASKS:
-        print(f"❌ Unknown task_key: {args.task_key}")
+        print(f"Unknown task_key: {args.task_key}")
         print("Available task_keys:")
         for k in EXAMPLE_TASKS:
             print(" -", k)

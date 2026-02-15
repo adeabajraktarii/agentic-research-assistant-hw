@@ -9,7 +9,7 @@ SEVERITY_RE = re.compile(r"(?:Severity|SEVERITY)\s*[:\-]\s*(.+)", re.IGNORECASE)
 IMPACT_RE = re.compile(r"(?:Impact|IMPACT)\s*[:\-]\s*(.+)", re.IGNORECASE)
 MITIGATION_RE = re.compile(r"(?:Mitigation|MITIGATION)\s*[:\-]\s*(.+)", re.IGNORECASE)
 
-# Also support markdown-ish patterns like: - **Severity:** High
+
 MD_FIELD_RE = {
     "severity": re.compile(r"\*\*Severity\*\*\s*[:\-]\s*(.+)", re.IGNORECASE),
     "impact": re.compile(r"\*\*Impact\*\*\s*[:\-]\s*(.+)", re.IGNORECASE),
@@ -20,7 +20,7 @@ MD_FIELD_RE = {
 def _clean(s: Optional[str]) -> str:
     if not s:
         return ""
-    # Remove stray markdown bullets/stars and extra whitespace
+
     s = s.strip()
     s = re.sub(r"^\s*[-•]\s*", "", s)
     s = s.replace("**", "").strip()
@@ -58,7 +58,6 @@ def _extract_fields_from_window(window_text: str) -> Tuple[str, str, str]:
     impact = ""
     mitigation = ""
 
-    # Plain patterns
     m = SEVERITY_RE.search(window_text)
     if m:
         severity = _clean(m.group(1))
@@ -71,7 +70,6 @@ def _extract_fields_from_window(window_text: str) -> Tuple[str, str, str]:
     if m:
         mitigation = _clean(m.group(1))
 
-    # Markdown patterns (fallback)
     if not severity:
         m = MD_FIELD_RE["severity"].search(window_text)
         if m:
@@ -91,7 +89,6 @@ def _extract_fields_from_window(window_text: str) -> Tuple[str, str, str]:
 
 
 def _risk_order_key(risk_id: str) -> int:
-    # R-001 -> 1
     m = re.search(r"R-(\d{3})", risk_id)
     return int(m.group(1)) if m else 9999
 
@@ -107,11 +104,9 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
     """
     notes = notes or []
 
-    # 1) Keep two buckets: risks notes (primary) + pricing notes (secondary support)
     risks_notes = [n for n in notes if _is_risks_doc(_pick_source_id(n))]
     pricing_notes = [n for n in notes if _is_pricing_doc(_pick_source_id(n))]
 
-    # If we somehow didn't retrieve risks.md, fail safely (but deterministic)
     if not risks_notes:
         return (
             "## Deliverable Package: Top 5 Risks\n\n"
@@ -123,7 +118,6 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
             "- Not found in sources\n"
         )
 
-    # 2) Extract risk blocks from risks.md text
     extracted: Dict[str, Dict[str, str]] = {}
     risk_citations: Dict[str, List[str]] = {}
 
@@ -133,18 +127,15 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
         if not text:
             continue
 
-        # Find all "R-###: Title" occurrences inside this chunk
         for match in RISK_ID_RE.finditer(text):
             rid = match.group(1).strip()
             title = _clean(match.group(2))
 
-            # Window: from match start to next ~600 chars (enough for fields)
             start = match.start()
             window = text[start : start + 600]
 
             severity, impact, mitigation = _extract_fields_from_window(window)
 
-            # Initialize if new
             if rid not in extracted:
                 extracted[rid] = {
                     "title": title,
@@ -154,7 +145,6 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
                 }
                 risk_citations[rid] = [source_id] if source_id else []
             else:
-                # Fill missing fields only (don’t overwrite good data)
                 if extracted[rid].get("title") in ("", "Not found in sources") and title:
                     extracted[rid]["title"] = title
                 if extracted[rid]["severity"] == "Not found in sources" and severity:
@@ -166,13 +156,10 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
 
                 if source_id and source_id not in risk_citations[rid]:
                     risk_citations[rid].append(source_id)
-
-    # 3) We only want Top 5 by ID order (R-001..)
+                    
     risk_ids = sorted(extracted.keys(), key=_risk_order_key)[:5]
 
-    # 4) Optional secondary support: pricing doc for R-004 only (if it was retrieved)
     if "R-004" in risk_ids and pricing_notes:
-        # If pricing mentions pricing/churn/discounting, attach its chunk id once
         pricing_source_ids = []
         for n in pricing_notes:
             sid = _pick_source_id(n)
@@ -182,12 +169,10 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
                     pricing_source_ids.append(sid)
 
         if pricing_source_ids:
-            # Add at most one pricing source id to R-004 citations
             sid = pricing_source_ids[0]
             if sid not in risk_citations.get("R-004", []):
                 risk_citations.setdefault("R-004", []).append(sid)
 
-    # 5) Render markdown
     lines: List[str] = []
     lines.append("# Deliverable Package: Top 5 Risks\n")
     lines.append("## Executive Summary")
@@ -203,10 +188,8 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
         impact = r.get("impact") or "Not found in sources"
         mitigation = r.get("mitigation") or "Not found in sources"
         cits = risk_citations.get(rid, [])
-        cits = [c for c in cits if c]  # remove blanks
+        cits = [c for c in cits if c]  
 
-        # Ensure we keep at least one risks.md citation
-        # (if the list got weird, fallback to first available risks note)
         if not cits:
             cits = [_pick_source_id(risks_notes[0])]
 
@@ -224,5 +207,5 @@ def build_top5_strict_risks_markdown(notes: List[dict]) -> str:
     for c in all_citations:
         lines.append(f"- ({c})")
 
-    lines.append("")  # trailing newline
+    lines.append("")  
     return "\n".join(lines)

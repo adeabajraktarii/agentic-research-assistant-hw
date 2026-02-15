@@ -61,7 +61,7 @@ def writer_agent(state: SharedState) -> SharedState:
     notes = state.research_notes or []
     task_key = (state.task_key or "").strip()
 
-    # If no citations, hard-stop safely
+
     if not _has_citations(notes):
         state.draft = (
             "## Deliverable Package\n\n"
@@ -76,9 +76,7 @@ def writer_agent(state: SharedState) -> SharedState:
         })
         return state
 
-    # -------------------------
-    # Deterministic tasks (locked)
-    # -------------------------
+    
     if task_key == "compare_approaches":
         state.draft = build_compare_markdown(notes)
         state.trace.append({
@@ -109,9 +107,7 @@ def writer_agent(state: SharedState) -> SharedState:
         })
         return state
 
-    # -------------------------
-    # Special LLM prompt: Top risks (non-strict) (LOCKED SHAPE)
-    # -------------------------
+    
     if task_key == "top_risks_mitigations":
         evidence_block = _build_context(notes)
 
@@ -161,9 +157,6 @@ def writer_agent(state: SharedState) -> SharedState:
         })
         return state
 
-    # -------------------------
-    # Special LLM prompt: Confluence page (LOCKED SHAPE)
-    # -------------------------
     if task_key == "draft_confluence_page":
         evidence_block = _build_context(notes)
 
@@ -204,9 +197,6 @@ def writer_agent(state: SharedState) -> SharedState:
         })
         return state
 
-    # -------------------------
-    # Default LLM writer (for remaining tasks)
-    # -------------------------
     evidence_block = _build_context(notes)
 
     system_prompt = (

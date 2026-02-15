@@ -43,12 +43,10 @@ def run_task(task: str, task_key: str | None = None) -> Dict[str, Any]:
 
     final_state = app.invoke(state)
 
-    # LangGraph may return either SharedState or dict depending on runtime/version.
     if isinstance(final_state, dict):
         return final_state
 
     if hasattr(final_state, "__dict__"):
         return final_state.__dict__  # SharedState dataclass
 
-    # Last-resort fallback
     return {"final_state": str(final_state)}

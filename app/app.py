@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 import streamlit as st
 
-# --- Make imports work when running `streamlit run app/app.py`
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -19,9 +18,6 @@ if str(ROOT) not in sys.path:
 from orchestration.graph import run_task  # noqa: E402
 
 
-# -----------------------------
-# Eval loading
-# -----------------------------
 @dataclass(frozen=True)
 class EvalCase:
     case_id: str
@@ -96,7 +92,7 @@ def _extract_citations_from_text(text: str) -> List[str]:
 
 def _init_run_history():
     if "run_history" not in st.session_state:
-        st.session_state.run_history = []  # list[dict]
+        st.session_state.run_history = []  
 
 
 def _log_run(
@@ -115,7 +111,7 @@ def _log_run(
     retrieved_chunks = 0
     for t in trace:
         if isinstance(t, dict) and t.get("step") == "research":
-            # try to parse: "Retrieved 22 chunks"
+            
             outcome = str(t.get("outcome", ""))
             for token in outcome.split():
                 if token.isdigit():
@@ -125,7 +121,6 @@ def _log_run(
     citations = _extract_citations_from_text(draft)
     status = "ok" if draft.strip() else "empty"
 
-    # For eval runs, show pass/fail in history
     if kind == "eval" and eval_pass is not None:
         status = "pass" if eval_pass else "fail"
 
@@ -176,10 +171,6 @@ def _render_run_history():
     with col_b:
         st.caption("")
 
-
-# -----------------------------
-# Eval scoring
-# -----------------------------
 def _score_eval_case(case: EvalCase, draft: str) -> Tuple[bool, Dict[str, Any]]:
     """
     Simple, stable scoring:
@@ -207,9 +198,6 @@ def _score_eval_case(case: EvalCase, draft: str) -> Tuple[bool, Dict[str, Any]]:
     return passed, details
 
 
-# -----------------------------
-# UI
-# -----------------------------
 st.set_page_config(page_title="Agentic Research Assistant", layout="wide")
 st.title("Agentic Research & Action Assistant")
 
@@ -240,9 +228,6 @@ def _on_task_key_change():
     st.session_state.task_text = TASK_DEFAULT_PROMPT.get(k, "")
 
 
-# -----------------------------
-# Run Task
-# -----------------------------
 if mode == "Run Task":
     st.subheader("Run Task")
 
@@ -295,9 +280,7 @@ if mode == "Run Task":
                 },
             )
 
-# -----------------------------
-# Run Eval
-# -----------------------------
+
 else:
     st.subheader("Run Eval")
 
@@ -333,7 +316,6 @@ else:
         draft = (result or {}).get("draft", "") or ""
         trace = (result or {}).get("trace", []) or []
 
-        # PASS/FAIL scoring
         passed, details = _score_eval_case(case, draft)
 
         _init_run_history()
@@ -346,13 +328,13 @@ else:
             eval_pass=passed,
         )
 
-        # ---- PASS/FAIL banner (prominent + clean)
+        
         if passed:
             st.success(f"✅ PASS — {case.case_id}")
         else:
             st.error(f"❌ FAIL — {case.case_id}")
 
-        # Show why only if it failed (keeps UI clean)
+        
         if not passed:
             with st.expander("Why it failed", expanded=True):
                 if details.get("missing"):

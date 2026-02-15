@@ -32,7 +32,7 @@ def _normalize_results_to_notes(results: list[dict]) -> list[dict]:
 
 
 def _extract_query(state: SharedState) -> str:
-    # prefer task_text then task
+    
     if isinstance(state.task_text, str) and state.task_text.strip():
         return state.task_text.strip()
     return (state.task or "").strip()
@@ -94,7 +94,7 @@ def researcher_agent(state: SharedState) -> SharedState:
         try:
             plan.postprocess(state)
         except Exception:
-            # never fail the run due to postprocess
+            
             pass
 
     state.meta["retrieval_debug"] = {

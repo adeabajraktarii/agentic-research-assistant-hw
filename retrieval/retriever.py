@@ -11,9 +11,6 @@ from openai import OpenAI
 
 from retrieval.index_store import INDEX_DIR
 
-# ---------------------------
-# Cache (avoid reloading)
-# ---------------------------
 _CACHED_INDEX: Optional[faiss.Index] = None
 _CACHED_META: Optional[List[Dict[str, Any]]] = None
 
@@ -65,7 +62,6 @@ def _row_to_result(row: Dict[str, Any], score: float) -> Dict[str, Any]:
         "source": md.get("source_name") or md.get("source_path") or "unknown",
         "locator": md.get("locator") or "unknown location",
         "score": float(score),
-        # Optional extras (harmless, can help debugging/UI)
         "metadata": md,
     }
 
@@ -99,13 +95,12 @@ def search_docs(
             continue
         results.append(_row_to_result(row, score=float(dist)))
 
-    # Forced include (ex: technical_decisions.md, risks.md)
     if must_include:
         needle = must_include.lower()
         forced = [r for r in results if needle in (r.get("source_id") or "").lower() or needle in (r.get("source") or "").lower()]
 
         if forced:
-            forced = forced[:2]  # include up to 2 forced chunks
+            forced = forced[:2] 
             seen = {r["source_id"] for r in forced if r.get("source_id")}
             for r in results:
                 if len(forced) >= top_k:

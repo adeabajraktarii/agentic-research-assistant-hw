@@ -7,14 +7,11 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-SUPPORTED_EXTS = {".txt", ".md"}  # keep it simple for now
+SUPPORTED_EXTS = {".txt", ".md"}  
 
 
 def _extract_md_headings(text: str) -> List[Tuple[int, str]]:
-    """
-    Lightweight Markdown heading index.
-    Returns a list of (line_number, heading_text) tuples, line_number is 1-based.
-    """
+    
     headings: List[Tuple[int, str]] = []
     for i, line in enumerate(text.splitlines()):
         stripped = line.lstrip()
@@ -26,7 +23,7 @@ def _extract_md_headings(text: str) -> List[Tuple[int, str]]:
 
 
 def _extract_md_title(text: str) -> Optional[str]:
-    """Return the first H1 (# ...) as a title if present."""
+    
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("# "):
@@ -35,11 +32,7 @@ def _extract_md_title(text: str) -> Optional[str]:
 
 
 def load_raw_documents(docs_dir: str = "data/docs") -> List[Document]:
-    """
-    Loads raw documents from data/docs.
-    Supports .txt and .md.
-    Returns LangChain Documents with metadata for traceability.
-    """
+    
     base = Path(docs_dir)
     if not base.exists():
         raise FileNotFoundError(f"Docs folder not found: {docs_dir}")
@@ -97,7 +90,7 @@ def chunk_documents(
         for i, s in enumerate(splits):
             s.metadata = dict(s.metadata or {})
 
-            s.metadata["chunk_id"] = i  # per-document
+            s.metadata["chunk_id"] = i  
             s.metadata["source_id"] = f"{doc_id}#chunk_{i}"
 
             start_idx = s.metadata.get("start_index")
@@ -126,7 +119,6 @@ def chunk_documents(
                         s.metadata["section_heading"] = nearest_heading_text
                         s.metadata["section_heading_line"] = nearest_heading_line
 
-            # Human-friendly locator for citations
             chunk_id = s.metadata.get("chunk_id")
             line_start = s.metadata.get("line_start")
             line_end = s.metadata.get("line_end")

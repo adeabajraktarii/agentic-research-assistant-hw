@@ -44,10 +44,7 @@ def save_index(vectorstore: FAISS, chunk_docs: List[Document]) -> None:
 
 
 def load_index() -> Tuple[FAISS, List[Document]]:
-    """
-    Load FAISS index in a Streamlit/Linux-safe way.
-    If pickle fails (Windows vs Linux issue), rebuild index from docs.
-    """
+
     embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
     try:
@@ -57,8 +54,7 @@ def load_index() -> Tuple[FAISS, List[Document]]:
             allow_dangerous_deserialization=True,
         )
     except Exception:
-        # If loading fails (very common on Streamlit due to Windows pickle),
-        # rebuild the index from documents.
+        
         vectorstore, chunks = build_faiss_index()
         save_index(vectorstore, chunks)
         return vectorstore, chunks
@@ -78,11 +74,6 @@ def load_index() -> Tuple[FAISS, List[Document]]:
 def ensure_index(
     docs_dir: str = "data/docs", force_rebuild: bool = False
 ) -> Tuple[FAISS, List[Document]]:
-    """
-    Ensure index exists.
-    IMPORTANT: We no longer require index.pkl (Windows pickle issue).
-    If anything is missing or broken, we rebuild automatically.
-    """
 
     faiss_exists = (FAISS_PATH / "index.faiss").exists()
     meta_ok = META_PATH.exists()

@@ -70,5 +70,4 @@ def postprocess_compare(state: SharedState) -> None:
 
     injected_note = {"claim": injected_text, "citations": [citation]}
 
-    # put first
     state.research_notes = [injected_note] + (state.research_notes or [])

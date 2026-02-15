@@ -25,7 +25,6 @@ def _parse_action_items_table_from_action_items_md(notes: List[dict]) -> List[Di
     """
     rows: List[Dict[str, str]] = []
 
-    # Find the action_items chunk(s)
     for n in notes or []:
         sid = (_first_source_id(n) or "").lower()
         if "doc:action_items.md" not in sid:
@@ -35,14 +34,12 @@ def _parse_action_items_table_from_action_items_md(notes: List[dict]) -> List[Di
         if not text:
             continue
 
-        # Parse markdown table rows
         lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
         table_lines = [ln for ln in lines if ln.startswith("|") and ln.endswith("|")]
 
         if len(table_lines) < 3:
             continue
 
-        # First is header, second is separator, rest are rows
         data_lines = table_lines[2:]
 
         for ln in data_lines:
@@ -52,7 +49,6 @@ def _parse_action_items_table_from_action_items_md(notes: List[dict]) -> List[Di
 
             priority, item, owner, due_date, status = cols[:5]
 
-            # Hard requirement: Owner and Due Date must be present
             if not owner or not due_date:
                 continue
 
@@ -65,7 +61,6 @@ def _parse_action_items_table_from_action_items_md(notes: List[dict]) -> List[Di
                 "cite": _first_source_id(n) or "doc:action_items.md",
             })
 
-    # Deduplicate by (priority,item,owner,due_date)
     seen = set()
     out: List[Dict[str, str]] = []
     for r in rows:
